@@ -16,7 +16,7 @@ namespace vui{
     struct VUIElement{
         std::string HEAD;
         std::vector<VUIElement> Children;
-        VUITypes selfType;
+        VUITypes selfType=VUITypes::Object;
         //bool isArrayElement=false;
         bool checkAvaliable(std::string key){
             for (auto i : Children){
@@ -83,6 +83,7 @@ namespace vui{
             struct VUIElement temp;
             temp.selfType=VUITypes::Number;
             temp.HEAD=std::string(HEAD);
+            temp.Children.push_back(source);
             target.Children.push_back(temp);
             return SUCCEDD;
         }
@@ -92,6 +93,7 @@ namespace vui{
             struct VUIElement temp;
             temp.selfType=VUITypes::Str;
             temp.HEAD=std::string(HEAD);
+            temp.Children.push_back(source);//TODO:here is a bug
             target.Children.push_back(temp);
             return SUCCEDD;
         }
