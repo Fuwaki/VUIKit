@@ -1,12 +1,17 @@
 #include <iostream>
-#include <vector>
-#include <concepts>
+#include "vui.creater.hpp"
 using namespace std;
-class A{
-    public:
-    int b=0;
-};
+using namespace vui;
 int main(int, char**) {
+    auto c=VUICreater();
+    struct VUIElement e;
+    c.AddObject<string>(e,string("cnmd"),"nm");
+    cout<<e.outSelf()<<endl;
+
+
+    
+
+    
 
     
     

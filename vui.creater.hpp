@@ -70,6 +70,7 @@ namespace vui{
 
     */
     class VUICreater{
+    public:
         VUICreater(){}
         /*Used to add a object as target's children*/
         int AddObject(struct VUIElement &target,struct VUIElement source){
@@ -81,23 +82,25 @@ namespace vui{
         int AddObject(struct VUIElement &target,T source,const char* HEAD){
             struct VUIElement temp;
             temp.selfType=VUITypes::Number;
-            temp.HEAD=std::string(HEAD)
+            temp.HEAD=std::string(HEAD);
             target.Children.push_back(temp);
+            return SUCCEDD;
         }
         /*Used to add a string as target's children,types like wchar_t,char,string,wstring are supported*/
         template<class T> requires (std::is_convertible_v<T,std::string>&&(!std::is_arithmetic_v<T>||std::is_same_v<T,char>))
         int AddObject(struct VUIElement &target,T source,const char* HEAD){
             struct VUIElement temp;
             temp.selfType=VUITypes::Str;
-            temp.HEAD=std::string(HEAD)
+            temp.HEAD=std::string(HEAD);
             target.Children.push_back(temp);
+            return SUCCEDD;
         }
-
+        /*
         std::string OutVUI(struct VUIElement target){
             for(auto i:target.Children){
                 
             }
-        }
+        }*/
 
     };
 }
