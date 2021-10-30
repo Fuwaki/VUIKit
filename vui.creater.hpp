@@ -23,7 +23,7 @@ namespace vui{
     
     struct VUIBasicElement{
         VUITypes selfType=VUITypes::Object;
-        virtual std::string OutSelf() =0;
+        virtual std::string OutSelf();
 
     };
     
@@ -130,6 +130,7 @@ namespace vui{
                 }
             }
             return temp;
+
         }
     };
 
