@@ -28,7 +28,7 @@ namespace vui{
     };
     
     struct VUIStrElement:VUIBasicElement{
-        std::string BODY;
+        std::string BODY="";
         std::string OutSelf() override{
             return BODY;
         }
@@ -84,7 +84,7 @@ namespace vui{
                     break;
                 }
             }
-            for (auto i: std::views::iota(0,rt.size())){
+            for (auto i: std::views::iota(0,int(rt.size()))){
                 temp.append(rt.at(i));
                 if (i!=rt.size()-2){
                     temp.append(",");
@@ -94,22 +94,26 @@ namespace vui{
         }
 
         /*Used to add a object as target's children*/
-        int AddElement(std::string HEAD,VUIObjectElement source){
+        int AddElement(const char* HEAD,VUIObjectElement source){
             this->BODY[HEAD] = source;
             return SUCCEDD;
         }
 
         /*Used to add a number as target's children*/
         template<class T> requires (std::is_arithmetic_v<T>&&!std::is_same_v<T,char>&&!std::is_same_v<T,const char>)
-        int AddObject(struct VUIElement &target,T source,const char* HEAD){
-
+        int AddObject(T source,const char* HEAD){
+            VUINumElement temp;
+            temp.BODY = long(source);
+            this->BODY[HEAD] = temp;
             return SUCCEDD;
         }
 
         /*Used to add a string as target's children,types like wchar_t,char,string,wstring are supported*/
         template<class T> requires (std::is_convertible_v<T,std::string>&&(!std::is_arithmetic_v<T>||std::is_same_v<T,char>))
-        int AddObject(struct VUIElement &target,T source,const char* HEAD){
-
+        int AddObject(T source,const char* HEAD){
+            VUIStrElement temp;
+            temp.BODY = std::string(source);
+            this->BODY[HEAD] = temp;
             return SUCCEDD;
         }
     };
@@ -118,7 +122,7 @@ namespace vui{
         std::vector<VUIBasicElement> BODY;
         std::string OutSelf() override{
             std::string temp;
-            for (auto i:std::views::iota(0,BODY.size()))
+            for (auto i:std::views::iota(0,int(BODY.size())))
             {
                 temp.append(BODY.at(i).OutSelf());
                 if (i!=BODY.size()-2){
