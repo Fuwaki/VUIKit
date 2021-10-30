@@ -22,7 +22,7 @@ namespace vui{
     
     
     struct VUIBasicElement{
-        VUITypes selfType=VUITypes::Object;
+        VUITypes selfType;
         virtual std::string OutSelf();
 
     };
@@ -100,22 +100,35 @@ namespace vui{
         }
 
         /*Used to add a number as target's children*/
-        template<class T> requires (std::is_arithmetic_v<T>&&!std::is_same_v<T,char>&&!std::is_same_v<T,const char>)
-        int AddObject(T source,const char* HEAD){
-            VUINumElement temp;
-            temp.BODY = long(source);
-            this->BODY[HEAD] = temp;
-            return SUCCEDD;
-        }
+        
+        // template<class T> requires (std::is_arithmetic_v<T>&&!std::is_same_v<T,char>&&!std::is_same_v<T,const char>)
+        // int AddObject(T source,const char* HEAD){
+        //     VUINumElement temp;
+        //     temp.BODY = long(source);
+        //     this->BODY[HEAD] = temp;
+        //     return SUCCEDD;
+        // }
 
-        /*Used to add a string as target's children,types like wchar_t,char,string,wstring are supported*/
-        template<class T> requires (std::is_convertible_v<T,std::string>&&(!std::is_arithmetic_v<T>||std::is_same_v<T,char>))
-        int AddObject(T source,const char* HEAD){
-            VUIStrElement temp;
-            temp.BODY = std::string(source);
-            this->BODY[HEAD] = temp;
-            return SUCCEDD;
+        // /*Used to add a string as target's children,types like wchar_t,char,string,wstring are supported*/
+        // template<class T> requires (std::is_convertible_v<T,std::string>&&(!std::is_arithmetic_v<T>||std::is_same_v<T,char>))
+        // int AddObject(T source,const char* HEAD){
+        //     VUIStrElement temp;
+        //     temp.BODY = std::string(source);
+        //     this->BODY[HEAD] = temp;
+        //     return SUCCEDD;
+        int AddObject(long source,const char* HEAD){
+             VUINumElement temp;
+             temp.BODY = long(source);
+             this->BODY[HEAD] = temp;
+             return SUCCEDD;
         }
+        int AddObject(const char* source,const char* HEAD){
+             VUIStrElement temp;
+             temp.BODY = std::string(source);
+             this->BODY[HEAD] = temp;
+             return SUCCEDD;
+        }
+        
     };
     
     struct VUIArrayElement:VUIBasicElement{
