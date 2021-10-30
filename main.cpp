@@ -1,19 +1,26 @@
 #include <iostream>
-#include "vui.creater.hpp"
+#include <sstream>
+
 using namespace std;
-using namespace vui;
+
 int main(int, char**) {
-    auto c=VUICreater();
-    struct VUIElement e;
-    c.AddObject<string>(e,string("cnmd"),"nm");
-    cout<<e.outSelf()<<endl;
-
-
-    
-
-    
-
-    
-    
-
+    auto c = stringstream();
+    c << "cnmd";
+    string a;
+    c >> a;
+    cout << a << endl;
+    c >> a;
+    c << "n";
+    a.clear();
+    cout << a << endl;
+    c >> a;
+    cout << a << endl;
+    c >> a;
+    cout << a << endl;
+    c >> a;
+    cout << a << endl;
+    c >> a;
+    cout << a << endl;
+    c >> a;
+    cout << a << endl;
 }
