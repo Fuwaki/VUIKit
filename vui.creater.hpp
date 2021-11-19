@@ -23,7 +23,8 @@ namespace vui{
     
     struct VUIBasicElement{
         VUITypes selfType;
-        virtual std::string OutSelf();
+        void* BODY;             
+        virtual std::string OutSelf(){};
 
     };
     
