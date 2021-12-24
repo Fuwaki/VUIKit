@@ -1,13 +1,11 @@
 #include <iostream>
 #include "vui.creater.hpp"
-
 using namespace std;
-using namespace vui;
-int main(int, char **)
+using namespace VUI::Creater;
+int main()
 {
-    VUIObjectElement root;
-    root.AddObject(123, "TESTNUM");
-    root.AddObject("123", "TESTSTR");
-    cout << root.OutSelf() << endl;
-    return EXIT_SUCCESS;
+    Manager test;
+    test.addNum("cnmd", 11);
+    test.addNum("wdnmd", 45);
+    test.addNum("nmsl", 14);
 }
