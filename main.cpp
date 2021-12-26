@@ -5,7 +5,8 @@ using namespace VUI::Creater;
 int main()
 {
     Manager test;
-    test.addNum("cnmd", 11);
-    test.addNum("wdnmd", 45);
-    test.addNum("nmsl", 14);
+    for (int i = 0; i < 1000000; i++) {
+        test.addNum("test", i);
+    }
+    test.outString();
 }
