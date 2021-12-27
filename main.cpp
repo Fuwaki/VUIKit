@@ -4,9 +4,15 @@ using namespace std;
 using namespace VUI::Creater;
 int main()
 {
-    Manager test;
-    for (int i = 0; i < 1000000; i++) {
-        test.addNum("test", i);
-    }
-    test.outString();
+    Manager test("VUI");
+    test.addElement("fuck", "a", VUITypes::Str);
+    test.addElement("Endermo", "114514", VUITypes::Number);
+    Object* temp;
+    temp = test.addObject("Null");
+    test.addElement("fly", "awa", VUITypes::Str, temp);
+    temp=test.addObject("fuck",temp);
+    test.addElement("fly","awa", VUITypes::Str,temp);
+    
+
+    cout<<test.outString()<<endl;
 }

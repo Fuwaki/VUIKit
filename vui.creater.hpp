@@ -2,14 +2,19 @@
 #include <cstring>
 #include <deque>
 #include <functional>
-#include <list>
-#include <memory>
-#include <string>
 #include <iostream>
+#include <list>
+#include <map>
+#include <memory>
+#include <regex>
+#include <string>
+#include <type_traits>
+#include <utility>
 #include <vector>
+// TODO:提高代码复用性]
+// TODO:使用更多c函数，提高速度
 namespace VUI::Creater {
-std::vector<long long> numList;
-std::vector<std::string> strList;
+
 
 enum class VUITypes {
     Number,
@@ -35,17 +40,24 @@ public:
     //自己的头
     std::string head;
     //下面是数据，应该只有一个会是有数据的
-    std::string *strd;
-    long long *numd;
-    //向前遍历，直到自己这个节点延伸下去，到的最尾端
-    void foreach (const std::function<void(Object*)>& func)
+    std::string *data;
+    //遍历自己的子元素，到的子链表最尾端,函数返回true停止，true继续
+    void foreach (const std::function<bool(Object*)>& func)
     {
         Object* now;
-        now = this;
-        while (now->next != nullptr) {
-            func(now);
-            //向前推
-            now = now->next;
+        now = this->son;
+        bool status=true;
+        while(status) {
+            if (func(now)) {
+                break;
+            };
+            if (now->next == nullptr) {
+                status = false;
+            }
+            if (status) {
+                now = now->next;
+            }
+        
         }
     }
     auto isFirst() -> bool
@@ -62,7 +74,37 @@ public:
         }
     }
     Object() = default;
-    ~Object() = default;
+    auto setData(std::string* d) -> void { this->data = d; };
+    //这个函数只会拷贝一个空壳，因为元素和数据是分开放的
+    Object(Object& obj)
+    {
+        //仅仅拷贝数据，而不拷贝前后关系,数据区位置也不管
+        this->head = obj.head;
+        this->type = obj.type;
+        this->_isFirst = obj._isFirst;
+    };
+    auto operator=(Object& obj) -> Object&
+    {
+        this->head = obj.head;
+        this->type = obj.type;
+        this->_isFirst = obj._isFirst;
+        return *this;
+    };
+    Object(Object& obj, Object* last, Object* next, Object* son)
+    {
+        *this = obj;
+        this->last = last;
+        this->next = next;
+        this->son = son;
+    }
+    //使用一个新的son，如果原来有的话，那么原来的将会变成一个孤魂，不会被delete，所以千万不要这样用
+    auto newSon() -> Object*
+    {
+        this->son = new Object();
+
+        return this->son;
+    }
+    ~Object() =default;
 };
 //函数声明区
 auto strOutFunction(Object* in) -> std::string;
@@ -73,11 +115,11 @@ auto addHead(const char* head, const char* body) -> std::string;
 
 auto strOutFunction(Object* in) -> std::string
 {
-    return std::string("\"").append(in->strd->c_str()).append("\"");
+    return std::string("\"").append(in->data->c_str()).append("\"");
 }
 auto numOutFunction(Object* in) -> std::string
 {
-    return std::to_string(*in->numd);
+    return *in->data;
 }
 //输出数组的文本的函数的in参数应该是数组的第一个节点
 auto arrayOutFunction(Object* in) -> std::string
@@ -107,6 +149,7 @@ auto arrayOutFunction(Object* in) -> std::string
         if (now->next->next != nullptr) {
             result.append(",");
         }
+        return false;
     });
     return result;
 }
@@ -116,28 +159,27 @@ auto objOutFunction(Object* in) -> std::string
     in->foreach ([&](Object* now) {
         switch (now->type) {
         case VUITypes::Array: {
-            result.append(addHead(now->head.c_str(),arrayOutFunction(now).c_str()));
+            result.append(addHead(now->head.c_str(), arrayOutFunction(now).c_str()));
             break;
         }
         case VUITypes::Number: {
-            result.append(addHead(now->head.c_str(),numOutFunction(now).c_str()));
+            result.append(addHead(now->head.c_str(), numOutFunction(now).c_str()));
             break;
         }
         case VUITypes::Str: {
-            result.append(addHead(now->head.c_str(),strOutFunction(now).c_str()));
+            result.append(addHead(now->head.c_str(), strOutFunction(now).c_str()));
             break;
         }
         case VUITypes::Object: {
-            result.append(addHead(now->head.c_str(),objOutFunction(now).c_str()));
+            result.append(addHead(now->head.c_str(), objOutFunction(now).c_str()));
             break;
         }
         }
         //要不要在后面加一个逗号？
-        if (now->next->next != nullptr) {
+        if (now->next != nullptr) {
             result.append(",");
-
-
         }
+        return false;
     });
     return result;
 }
@@ -152,97 +194,116 @@ class Manager {
 private:
     //对象和数据分开储存
     //数据
-    std::list<long long> numList;
-    std::list<std::string> strList;
-    //根对象,也就是链表的头部
+    std::list<std::string> dataList;
+    //根对象
     Object* rootObj = new Object();
-    //链表的最尾段
-    Object* end = rootObj;
+    //可能会有多个子obj，每个obj都要他们的最尾端
+    //只有当某个obj不为空的时候，ends中才有记录
+    std::map<Object*, Object*> ends;
 
 public:
-    //添加字符串
-    auto addStr(const char* HEAD, char* BODY) -> void
+    auto addElement(char* head, std::string body,VUITypes type, Object* dest = nullptr)
     {
-        this->end->head = HEAD;
-        this->end->type = VUITypes::Str;
-        //把数据添加到管理区
-        this->strList.emplace_back(BODY);
-        this->end->strd = &this->strList.back();
+        if (type == VUITypes::Array || type == VUITypes::Object) {
+            throw "nmsl,tm谁让你type选这两个类型的？这个函数不管这个！！！";
+            return ;
+        }
+        
+        dest = dest == nullptr ? this->rootObj : dest;
+        Object* t;
+        //如果obj为空，那么先添加一个子
+        if (dest->son == nullptr) {
+            t = dest->newSon();
+            ends[dest] = t;
+        } else {
+            t = new Object();
+            ends[dest]->next = t;
+            ends[dest]=t;
+        }
+        // t就是操作数啦,目前t是空的
+        t->head.append(head);
 
-        //添加一个新的元素
-        auto temp = new Object();
-        this->end->next = temp;
-        temp->last = this->end;
-        this->end = temp;
-    };
-
-    //添加数字
-    auto addNum(const char* HEAD, long long BODY) -> void
+        t->type = type;
+        this->dataList.emplace_back(std::move(body));
+        t->data=&this->dataList.back();
+    }
+    auto addObject(char* head, Object* dest = nullptr)
     {
-        this->end->head = HEAD;
-        this->end->type = VUITypes::Number;
-        //把数据添加到管理区
-        this->numList.emplace_back(BODY);
-        this->end->numd = &this->numList.back();
-
-        //添加一个新的元素
-        auto temp = new Object();
-        this->end->next = temp;
-        temp->last = this->end;
-        this->end = temp;
-    };
-
-    //添加列表
-    auto addArray(const char* HEAD) -> void
+        dest = dest == nullptr ? this->rootObj : dest;
+        Object* temp = new Object();
+        temp->head=head;
+        temp->type = VUITypes::Object;
+        ends[dest]->next = temp;
+        ends[dest] = temp;
+        return temp;
+        }
+    //如果找不到，那么会返回一个nullptr，防止空指针，请一定要检验（如何检验？判别式、澄清石灰水、带火星的小木条都可以）
+    //路径描述语法：a.b.c
+    //例子：root有个叫son的obj，但是son有个叫做fuckingson的obj,写成root.son.fuckingson
+    auto findObj(std::string path, Object* begin = nullptr) -> Object*
     {
-        //在列表中的时候，列表的子元素的head应该是空的
-        //目前这个地方只是创建了Array，暂时还不需要把子元素放进去
-        this->end->head = HEAD;
-        this->end->type = VUITypes::Array;
+        std::deque<std::string> paths;
+        begin = begin == nullptr ? rootObj : begin;
+        Object* res;
 
-        //添加一个新的元素
-        auto temp = new Object();
-        this->end->next = temp;
-        temp->last = this->end;
-        this->end = temp;
-    };
-
-    //添加子元素
-    auto addObject(const char* HEAD) -> void
-    {
-        this->end->head = HEAD;
-        this->end->type = VUITypes::Object;
-        //目前这个地方也是创建，不需要添加子元素
-
-        //添加一个新的元素
-        auto temp = new Object();
-        this->end->next = temp;
-        temp->last = this->end;
-        this->end = temp;
-    };
+        {
+            //解析path,以“.”分割字符串，存入paths
+            std::string::size_type pos;
+            path += '.'; //扩展字符串以方便操作
+            int size = path.size();
+            for (int i = 0; i < size; i++) {
+                pos = path.find('.', i);
+                if (pos < size) {
+                    std::string s = path.substr(i, pos - i);
+                    paths.push_back(s);
+                    i = pos;
+                }
+            }
+        }
+        Object* temp = rootObj;
+        for (auto i : paths) {
+            temp->foreach ([&](Object* in) {
+                if (in->head == i) {
+                    if (i != paths.back()) {
+                        //找到了,没找完
+                        temp = in;
+                        return true;
+                    } else {
+                        //找到了，找完了
+                        res = in;
+                        return true;
+                    }
+                    //不是这一个
+                    return false;
+                }
+            });
+        }
+        return res;
+    }
 
     //输出
     auto outString() -> std::string
     {
-        return objOutFunction(this->rootObj);
+        return addHead(this->rootObj->head.c_str(),objOutFunction(this->rootObj).c_str());
     };
+    Manager(std::string HEAD)
+    {
+        this->rootObj->type = VUITypes::Object;
+        this->rootObj->head = std::move(HEAD);
+    }
+    //使用深拷贝来构造
+    Manager(Manager& in)
+    {
+        this->dataList=in.dataList;
+        //链表的整个结构需要完全拷贝
+    }
 
     ~Manager()
     {
         //释放数据区内存
-        numList.erase(numList.begin());
-        numList.clear();
-        strList.erase(strList.begin());
-        strList.clear();
+        // TODO:释放数据储存区的代码会导致错误，需要修改
         //释放对象内存
-        Object* temp;
-        temp = end;
-        while (temp->next != nullptr) {
-            //向前面移
-            temp = temp->next;
-            delete temp->last;
-        }
+        ends.clear();
     }
 };
-
 }
