@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstring>
+#include <cwchar>
 #include <deque>
 #include <functional>
 #include <iostream>
@@ -38,9 +39,9 @@ public:
     //如果该类型是Object或者Array，那么它是有一个son的
     Object* son = nullptr;
     //自己的头
-    std::string head;
+    std::wstring head;
     //下面是数据，应该只有一个会是有数据的
-    std::string *data;
+    std::wstring *data;
     //遍历自己的子元素，到的子链表最尾端,函数返回true停止，true继续
     void foreach (const std::function<bool(Object*)>& func)
     {
@@ -74,7 +75,7 @@ public:
         }
     }
     Object() = default;
-    auto setData(std::string* d) -> void { this->data = d; };
+    auto setData(std::wstring* d) -> void { this->data = d; };
     //这个函数只会拷贝一个空壳，因为元素和数据是分开放的
     Object(Object& obj)
     {
@@ -107,24 +108,24 @@ public:
     ~Object() =default;
 };
 //函数声明区
-auto strOutFunction(Object* in) -> std::string;
-auto numOutFunction(Object* in) -> std::string;
-auto arrayOutFunction(Object* in) -> std::string;
-auto objOutFunction(Object*) -> std::string;
-auto addHead(const char* head, const char* body) -> std::string;
+auto strOutFunction(Object* in) -> std::wstring;
+auto numOutFunction(Object* in) -> std::wstring;
+auto arrayOutFunction(Object* in) -> std::wstring;
+auto objOutFunction(Object*) -> std::wstring;
+auto addHead(const wchar_t* head, const wchar_t* body) -> std::wstring;
 
-auto strOutFunction(Object* in) -> std::string
+auto strOutFunction(Object* in) -> std::wstring
 {
-    return std::string("\"").append(in->data->c_str()).append("\"");
+    return std::wstring(L"\"").append(in->data->c_str()).append(L"\"");
 }
-auto numOutFunction(Object* in) -> std::string
+auto numOutFunction(Object* in) -> std::wstring
 {
     return *in->data;
 }
 //输出数组的文本的函数的in参数应该是数组的第一个节点
-auto arrayOutFunction(Object* in) -> std::string
+auto arrayOutFunction(Object* in) -> std::wstring
 {
-    std::string result;
+    std::wstring result;
     in->foreach ([&](Object* now) {
         switch (now->type) {
         case VUITypes::Array: {
@@ -147,15 +148,15 @@ auto arrayOutFunction(Object* in) -> std::string
         //要不要在后面加一个逗号？
         //最后一个是空的，所以应该是倒数第二才是有效的
         if (now->next->next != nullptr) {
-            result.append(",");
+            result.append(L",");
         }
         return false;
     });
     return result;
 }
-auto objOutFunction(Object* in) -> std::string
+auto objOutFunction(Object* in) -> std::wstring
 {
-    std::string result;
+    std::wstring result;
     in->foreach ([&](Object* now) {
         switch (now->type) {
         case VUITypes::Array: {
@@ -177,24 +178,24 @@ auto objOutFunction(Object* in) -> std::string
         }
         //要不要在后面加一个逗号？
         if (now->next != nullptr) {
-            result.append(",");
+            result.append(L",");
         }
         return false;
     });
     return result;
 }
-//会为out创建控件，所以out输入时只需是个空指针
-auto addHead(const char* head, const char* body) -> std::string
+
+auto addHead(const wchar_t* head, const wchar_t* body) -> std::wstring
 {
-    char buf[strlen(head) + strlen(body) + 2];
-    sprintf(buf, "%s{%s}", head, body);
-    return std::string(buf);
+    std::wstring temp;
+    temp.append(head).append(L"{").append(body).append(L"}");
+    return temp;
 }
 class Manager {
 private:
     //对象和数据分开储存
     //数据
-    std::list<std::string> dataList;
+    std::list<std::wstring> dataList;
     //根对象
     Object* rootObj = new Object();
     //可能会有多个子obj，每个obj都要他们的最尾端
@@ -202,7 +203,7 @@ private:
     std::map<Object*, Object*> ends;
 
 public:
-    auto addElement(char* head, std::string body,VUITypes type, Object* dest = nullptr)
+    auto addElement(wchar_t* head, std::wstring body,VUITypes type, Object* dest = nullptr)
     {
         if (type == VUITypes::Array || type == VUITypes::Object) {
             throw "nmsl,tm谁让你type选这两个类型的？这个函数不管这个！！！";
@@ -227,7 +228,7 @@ public:
         this->dataList.emplace_back(std::move(body));
         t->data=&this->dataList.back();
     }
-    auto addObject(char* head, Object* dest = nullptr)
+    auto addObject(wchar_t* head, Object* dest = nullptr)
     {
         dest = dest == nullptr ? this->rootObj : dest;
         Object* temp = new Object();
@@ -240,21 +241,21 @@ public:
     //如果找不到，那么会返回一个nullptr，防止空指针，请一定要检验（如何检验？判别式、澄清石灰水、带火星的小木条都可以）
     //路径描述语法：a.b.c
     //例子：root有个叫son的obj，但是son有个叫做fuckingson的obj,写成root.son.fuckingson
-    auto findObj(std::string path, Object* begin = nullptr) -> Object*
+    auto findObj(std::wstring path, Object* begin = nullptr) -> Object*
     {
-        std::deque<std::string> paths;
+        std::deque<std::wstring> paths;
         begin = begin == nullptr ? rootObj : begin;
         Object* res;
 
         {
             //解析path,以“.”分割字符串，存入paths
-            std::string::size_type pos;
+            std::wstring::size_type pos;
             path += '.'; //扩展字符串以方便操作
             int size = path.size();
             for (int i = 0; i < size; i++) {
                 pos = path.find('.', i);
                 if (pos < size) {
-                    std::string s = path.substr(i, pos - i);
+                    std::wstring s = path.substr(i, pos - i);
                     paths.push_back(s);
                     i = pos;
                 }
@@ -282,11 +283,11 @@ public:
     }
 
     //输出
-    auto outString() -> std::string
+    auto outString() -> std::wstring
     {
         return addHead(this->rootObj->head.c_str(),objOutFunction(this->rootObj).c_str());
     };
-    Manager(std::string HEAD)
+    Manager(std::wstring HEAD)
     {
         this->rootObj->type = VUITypes::Object;
         this->rootObj->head = std::move(HEAD);
