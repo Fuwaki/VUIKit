@@ -1,0 +1,4 @@
+#mix 分支
+这个分支是vuic和vuip的融合开发分支
+
+每一个release将会merge到main
