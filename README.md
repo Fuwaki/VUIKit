@@ -4,3 +4,5 @@ VUI，是一种数据描述语言，此为其适用套件，提供完整的解�
 
 
 原仓库[Haceau-Zoac/vui.parser](https://github.com/Haceau-Zoac/vui.parser)
+
+为仓库[EnderMo/VertexUI](https://github.com/EnderMo/VertexUI)所服务
